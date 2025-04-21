@@ -1,0 +1,30 @@
+{
+  "name": "naqqas-api",
+  "version": "1.0.0",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "test": "jest"
+  },
+  "keywords": ["google", "sheets", "drive", "api", "medication", "tracking"],
+  "author": "Abdo Adimy",
+  "license": "ISC",
+  "description": "Node.js API for Google Drive/Sheets medication tracking system",
+  "dependencies": {
+    "body-parser": "^2.2.0",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "google-auth-library": "^9.15.1",
+    "googleapis": "^148.0.0",
+    "node-fetch": "^3.3.2",
+    "open": "^10.1.1",
+    "server-destroy": "^1.0.1"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.9",
+    "supertest": "^7.1.0"
+  }
+}
