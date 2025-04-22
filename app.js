@@ -745,7 +745,7 @@ async function storeMedicationData(auth, sheetId, medicationName, quantity, date
             valueInputOption: 'RAW',
             insertDataOption: 'INSERT_ROWS',
             resource: {
-                values: [[medicationName, quantity, timestamp]]
+                values: [medicationName, quantity, timestamp]
             }
         });
         
