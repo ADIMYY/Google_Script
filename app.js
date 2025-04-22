@@ -563,13 +563,16 @@ async function storeOrder(auth, sheetId, medications, date = new Date(), folderT
         const { sheets } = getGoogleClients(auth);
         const timestamp = date instanceof Date ? date.toISOString() : new Date().toISOString();
         
-        sheets.spreadsheets.values.append({
+        // Create one row per medication
+        const rows = medications.map(med => [med.name, med.quantity, timestamp]);
+        
+        await sheets.spreadsheets.values.append({
             spreadsheetId: sheetId,
             range: 'Sheet1',
             valueInputOption: 'RAW',
             insertDataOption: 'INSERT_ROWS',
             resource: {
-                values: [medications.map(med => [med.name, med.quantity, timestamp])]
+                values: rows
             }
         });
         
