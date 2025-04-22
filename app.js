@@ -392,16 +392,8 @@ async function validateSheetAccess(auth, sheetId, userEmail, folderType = FOLDER
         const targetFolderId = await getOrCreateSubFolder(auth, rootFolderId, targetFolderName);
         const userFolderId = await getOrCreateSubFolder(auth, targetFolderId, userEmail);
         
-        // Modify the query approach to use separate conditions
-        const query = [
-            `'${userFolderId}' in parents`,
-            `id = '${sheetId}'`,
-            `mimeType = 'application/vnd.google-apps.spreadsheet'`,
-            `trashed = false`
-        ].join(' and ');
-        
-        // For debugging
-        console.log('Drive API query:', query);
+        // Correct query format without spaces around operators
+        const query = `'${userFolderId}' in parents and id='${sheetId}' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false`;
         
         const response = await drive.files.list({
             q: query,
@@ -414,7 +406,6 @@ async function validateSheetAccess(auth, sheetId, userEmail, folderType = FOLDER
         
         return true;
     } catch (error) {
-        // Better error logging
         console.error('Error validating sheet access:', error.message);
         if (error.errors) {
             console.error('Detailed errors:', JSON.stringify(error.errors));
