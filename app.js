@@ -739,16 +739,18 @@ async function storeMedicationData(auth, sheetId, medicationName, quantity, date
         const { sheets } = getGoogleClients(auth);
         const timestamp = date instanceof Date ? date.toISOString() : new Date().toISOString();
         
-        sheets.spreadsheets.values.append({
+        // This is the key change - use nested array and await the call
+        const response = await sheets.spreadsheets.values.append({
             spreadsheetId: sheetId,
             range: 'Sheet1',
             valueInputOption: 'RAW',
             insertDataOption: 'INSERT_ROWS',
             resource: {
-                values: [medicationName, quantity, timestamp]
+                values: [[medicationName, quantity, timestamp]]
             }
         });
         
+        console.log('Data append response:', JSON.stringify(response.data));
         return true;
     } catch (error) {
         console.error('Error storing medication data:', error);
