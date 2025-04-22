@@ -88,6 +88,49 @@ node app.js
 2. Visit `http://localhost:3000/auth` to authenticate with Google
 3. After authentication, you can use the API endpoints to manage your sheets and data
 
+## Deployment
+
+### Local Deployment
+
+1. Start the server:
+
+```bash
+node app.js
+```
+
+2. Visit `http://localhost:3000/auth` to authenticate with Google
+
+### Vercel Deployment
+
+This project is configured for easy deployment on Vercel:
+
+1. Create a Vercel account at [vercel.com](https://vercel.com) if you don't have one
+2. Install the Vercel CLI:
+
+```bash
+npm install -g vercel
+```
+
+3. Deploy to Vercel:
+
+```bash
+vercel
+```
+
+4. Set up environment variables in the Vercel dashboard:
+
+   - Go to your project settings
+   - Navigate to the "Environment Variables" section
+   - Add the following variables:
+     - `CLIENT_ID`
+     - `CLIENT_SECRET`
+     - `REDIRECT_URI` (set this to your Vercel deployment URL + `/oauth2callback`)
+     - `REFRESH_TOKEN`
+
+5. Update your Google Cloud Console OAuth 2.0 configuration:
+   - Add your Vercel deployment URL to the authorized redirect URIs
+   - Add your Vercel deployment URL to the authorized JavaScript origins
+
 ## Error Handling
 
 The API includes comprehensive error handling for:
