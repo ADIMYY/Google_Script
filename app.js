@@ -378,6 +378,7 @@ async function logEvent(auth, message, type = "INFO") {
 }
 
 // === Sheet Validation ===
+// Modified validateSheetAccess function
 async function validateSheetAccess(auth, sheetId, userEmail, folderType = FOLDER_TYPES.SHEETS) {
     if (!sheetId) {
         throw new Error(ERROR_MESSAGES.SHEET_ID_REQUIRED);
@@ -391,8 +392,19 @@ async function validateSheetAccess(auth, sheetId, userEmail, folderType = FOLDER
         const targetFolderId = await getOrCreateSubFolder(auth, rootFolderId, targetFolderName);
         const userFolderId = await getOrCreateSubFolder(auth, targetFolderId, userEmail);
         
+        // Modify the query approach to use separate conditions
+        const query = [
+            `'${userFolderId}' in parents`,
+            `id = '${sheetId}'`,
+            `mimeType = 'application/vnd.google-apps.spreadsheet'`,
+            `trashed = false`
+        ].join(' and ');
+        
+        // For debugging
+        console.log('Drive API query:', query);
+        
         const response = await drive.files.list({
-            q: `'${userFolderId}' in parents and id='${sheetId}' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false`,
+            q: query,
             fields: 'files(id, name)'
         });
         
@@ -402,7 +414,11 @@ async function validateSheetAccess(auth, sheetId, userEmail, folderType = FOLDER
         
         return true;
     } catch (error) {
-        console.error('Error validating sheet access:', error);
+        // Better error logging
+        console.error('Error validating sheet access:', error.message);
+        if (error.errors) {
+            console.error('Detailed errors:', JSON.stringify(error.errors));
+        }
         throw error;
     }
 }
