@@ -745,7 +745,7 @@ app.post('/api', async (req, res) => {
                 return res.json({ success: true, data: { sheetId: orderSheetId } });
                 
             case "storeorder":
-                validateInput(req.body, ["sheetId", "medications", "quantity"]);
+                validateInput(req.body, ["sheetId", "medications"]);
                 const storeResult = await storeOrder(
                     auth,
                     req.body.sheetId, 
