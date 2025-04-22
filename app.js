@@ -378,7 +378,6 @@ async function logEvent(auth, message, type = "INFO") {
 }
 
 // === Sheet Validation ===
-// Modified validateSheetAccess function
 async function validateSheetAccess(auth, sheetId, userEmail, folderType = FOLDER_TYPES.SHEETS) {
     if (!sheetId) {
         throw new Error(ERROR_MESSAGES.SHEET_ID_REQUIRED);
@@ -392,19 +391,58 @@ async function validateSheetAccess(auth, sheetId, userEmail, folderType = FOLDER
         const targetFolderId = await getOrCreateSubFolder(auth, rootFolderId, targetFolderName);
         const userFolderId = await getOrCreateSubFolder(auth, targetFolderId, userEmail);
         
-        // Correct query format without spaces around operators
-        const query = `'${userFolderId}' in parents and id='${sheetId}' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false`;
-        
-        const response = await drive.files.list({
-            q: query,
-            fields: 'files(id, name)'
-        });
-        
-        if (!response.data.files || response.data.files.length === 0) {
-            throw new Error(ERROR_MESSAGES.SHEET_NOT_FOUND);
+        // Try a direct approach instead of search query
+        try {
+            // First verify the sheet exists and is a spreadsheet
+            const fileResponse = await drive.files.get({
+                fileId: sheetId,
+                fields: 'id,name,mimeType,trashed'
+            });
+            
+            // Check if it's a spreadsheet and not trashed
+            if (fileResponse.data.mimeType !== 'application/vnd.google-apps.spreadsheet' || 
+                fileResponse.data.trashed) {
+                throw new Error(ERROR_MESSAGES.SHEET_NOT_FOUND);
+            }
+            
+            // Then check if it's in the right folder
+            const parentResponse = await drive.files.get({
+                fileId: sheetId,
+                fields: 'parents'
+            });
+            
+            if (!parentResponse.data.parents || 
+                !parentResponse.data.parents.includes(userFolderId)) {
+                throw new Error(ERROR_MESSAGES.SHEET_NOT_FOUND);
+            }
+            
+            return true;
+        } catch (error) {
+            // If direct approach fails, try with a simpler query as fallback
+            if (error.code === 404) {
+                throw new Error(ERROR_MESSAGES.SHEET_NOT_FOUND);
+            }
+            
+            // Fallback to a simpler query (just ID and parent)
+            const simpleQuery = `'${userFolderId}' in parents and id='${sheetId}'`;
+            
+            const response = await drive.files.list({
+                q: simpleQuery,
+                fields: 'files(id, name, mimeType, trashed)'
+            });
+            
+            if (!response.data.files || response.data.files.length === 0) {
+                throw new Error(ERROR_MESSAGES.SHEET_NOT_FOUND);
+            }
+            
+            // Check if it's a spreadsheet and not trashed
+            const file = response.data.files[0];
+            if (file.mimeType !== 'application/vnd.google-apps.spreadsheet' || file.trashed) {
+                throw new Error(ERROR_MESSAGES.SHEET_NOT_FOUND);
+            }
+            
+            return true;
         }
-        
-        return true;
     } catch (error) {
         console.error('Error validating sheet access:', error.message);
         if (error.errors) {
