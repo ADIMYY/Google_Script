@@ -489,7 +489,7 @@ async function createOrderSheet(auth, sheetName = "Orders", folderType = FOLDER_
             range: 'Sheet1!A1:E1',
             valueInputOption: 'RAW',
             resource: {
-                values: [["Order ID", "Medication Name", "Quantity", "Status", "Timestamp"]]
+                values: [["Medication Name", "Quantity", "Timestamp"]]
             }
         });
         
@@ -506,13 +506,9 @@ async function createOrderSheet(auth, sheetName = "Orders", folderType = FOLDER_
     }
 }
 
-function generateOrderId() {
-    return `ORD-${new Date().getTime()}`;
-}
-
-async function storeOrder(auth, sheetId, medicationName, quantity, status = "Pending", date = new Date(), folderType = FOLDER_TYPES.ORDER) {
-    if (!sheetId || !medicationName || !quantity) {
-        throw new Error(ERROR_MESSAGES.SHEET_ID_MED_NAME_QUANTITY_REQUIRED);
+async function storeOrder(auth, sheetId, medications, date = new Date(), folderType = FOLDER_TYPES.ORDER) {
+    if (!sheetId || !medications) {
+        throw new Error(ERROR_MESSAGES.SHEET_ID_MEDICATIONS_REQUIRED);
     }
     
     try {
@@ -520,16 +516,15 @@ async function storeOrder(auth, sheetId, medicationName, quantity, status = "Pen
         await validateSheetAccess(auth, sheetId, userEmail, folderType);
         
         const { sheets } = getGoogleClients(auth);
-        const orderId = generateOrderId();
         const timestamp = date instanceof Date ? date.toISOString() : new Date().toISOString();
         
-        await sheets.spreadsheets.values.append({
+        sheets.spreadsheets.values.append({
             spreadsheetId: sheetId,
             range: 'Sheet1',
             valueInputOption: 'RAW',
             insertDataOption: 'INSERT_ROWS',
             resource: {
-                values: [[orderId, medicationName, quantity, status, timestamp]]
+                values: [medications.map(med => [med.name, med.quantity, timestamp])]
             }
         });
         
@@ -578,7 +573,7 @@ async function deleteSheet(auth, sheetId, folderType = FOLDER_TYPES.SHEETS) {
         
         const { drive } = getGoogleClients(auth);
         
-        await drive.files.update({
+        drive.files.update({
             fileId: sheetId,
             resource: {
                 trashed: true
@@ -628,7 +623,7 @@ async function updateMedicationData(auth, sheetId, medicationName, newQuantity =
         const updatedQuantity = newQuantity === null ? data[rowIndex - 1][1] : newQuantity;
         const timestamp = new Date().toISOString();
         
-        await sheets.spreadsheets.values.update({
+        sheets.spreadsheets.values.update({
             spreadsheetId: sheetId,
             range: `Sheet1!A${rowIndex}:C${rowIndex}`,
             valueInputOption: 'RAW',
@@ -696,7 +691,7 @@ async function storeMedicationData(auth, sheetId, medicationName, quantity, date
         const { sheets } = getGoogleClients(auth);
         const timestamp = date instanceof Date ? date.toISOString() : new Date().toISOString();
         
-        await sheets.spreadsheets.values.append({
+        sheets.spreadsheets.values.append({
             spreadsheetId: sheetId,
             range: 'Sheet1',
             valueInputOption: 'RAW',
@@ -754,9 +749,7 @@ app.post('/api', async (req, res) => {
                 const storeResult = await storeOrder(
                     auth,
                     req.body.sheetId, 
-                    req.body.medicationName, 
-                    req.body.quantity, 
-                    req.body.status, 
+                    req.body.medications,
                     req.body.date, 
                     req.body.folderType
                 );
